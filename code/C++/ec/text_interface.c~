@@ -1,0 +1,170 @@
+//AUTHOR: Dakota Simonds
+//DATE: Oct, 2015
+
+#ifndef TEXT_INTERFACE
+#define TEXT_INTERFACE
+
+#include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
+#include "malloc.h"
+#include "xml.c" //courtesy of https://github.com/ooxi/xml.c
+
+int CONSOLE_WIDTH = 79; //makes a bit of an assumption here but this is pretty standard
+
+//
+//abstracted characters
+//
+#ifdef WINDOWS
+const char rightPointingTriangle = 0x10;
+const char leftPointingTriangle = 0x11;
+const char upPointingTriangle = 0x1E;
+const char downPointingTriangle = 0x1F;
+const char skinnyHorizontalBrick = 0x16;
+const char leftElbow = 0x1C;
+const char littleDownRightElbow = 0xA9;
+const char littleDownLeftElbow = 0xAA;
+const char verySoftCloud = 0xb0;
+const char softCloud = 0xB1;
+const char hardCloud = 0xB2;
+const char pipe = 0xB3;
+const char solidBlock = 0xFE;
+const char solidTallBlock = 0xDB;
+const char threeBars = 0xF0;
+const char longDash = 0xC4;
+const char topLeftCorner = 0xDA;
+const char topRightCorner = 0xBF;
+const char bottomLeftCorner = 0xC0;
+const char bottomRightCorner = 0xD9;
+const char doubledArrows = 0xAF;
+#endif
+
+#ifdef LINUX
+//Fill it in with something roughly equivalent so it doesn't look like complete garbage
+const char rightPointingTriangle = '>';
+const char leftPointingTriangle = '<';
+const char upPointingTriangle = '^';
+const char downPointingTriangle = ' ';
+const char skinnyHorizontalBrick = '=';
+const char leftElbow = ' ';
+const char littleDownRightElbow = ' ';
+const char littleDownLeftElbow = ' ';
+const char verySoftCloud = '=';
+const char softCloud = '=';
+const char hardCloud = '=';
+const char pipe = '|';
+const char solidBlock = '=';
+const char solidTallBlock = '=';
+const char threeBars = '=';
+const char longDash = '-';
+const char topLeftCorner = ' ';
+const char topRightCorner = ' ';
+const char bottomLeftCorner = ' ';
+const char bottomRightCorner = ' ';
+const char doubledArrows = '>';
+#endif
+
+
+void str_mult(char stringToMult, int multBy) //string multiplication. mulitpilcation as in reproduction not math.
+{
+	for(int i = 0; i < multBy; i++)
+		putchar(stringToMult);
+}
+
+//like str_mult but returns the string instead of printing it.
+char* str_mult_factory(char charToMult, size_t multBy) 
+{
+	char *multstring = malloc(multBy);
+	
+	for(int i = 0; i < multBy; i++)
+		multstring[i] = charToMult;
+	
+	return multstring; //remember to free() this after use
+}
+
+char* string_cat_safe(char *base, char *tophat, size_t baseLen, size_t tophatLen) 
+{
+	size_t totalLen = baseLen + tophatLen;
+	
+	char *joined = malloc(totalLen);
+	for(unsigned int i = 0; i < baseLen; i++)
+		joined[i] = base[i];
+	
+	//put the tophat on
+	for(unsigned int i = baseLen; i < tophatLen; ++i)
+		joined[i] = tophat[i];
+	
+	return joined; //remember to free this after use
+}
+
+void lineOf(char material)
+{
+	str_mult(material, CONSOLE_WIDTH);
+	printf("\n");
+}
+
+void printToCenter(const char *text, int lengthOfString)
+{
+	// essentially find center of string and align that with center of console
+	int centerOfConsole = CONSOLE_WIDTH / 2;
+	int numbSpace = centerOfConsole - (lengthOfString / 2 ); 
+	
+	for(int i = 0; i < numbSpace;i++)
+		printf(" ");
+	printf("%s", text);
+}
+
+void topOfBox(int boxWidth)
+{
+	printf("%c", topLeftCorner);
+	str_mult(longDash, (boxWidth - 2)); //subt 2 because of the corners
+	printf("%c", topRightCorner);
+	printf("\n");
+}
+
+void bottomOfBox(int boxWidth)
+{
+	printf("%c", bottomLeftCorner);
+	str_mult(longDash, (boxWidth - 2));
+	printf("%c", bottomRightCorner);
+	printf("\n");
+}
+
+void display_in_box( const char *items[], int item_count, int boxWidth, int columns )
+{
+	short auto_align_flag; //forgot what what I was going to do with this
+	
+	if(boxWidth == 0)
+		auto_align_flag = 1;
+	else
+		auto_align_flag = 0;
+	
+	
+	topOfBox(boxWidth);
+	
+	int boxWidthWithoutBorders = boxWidth - 2;
+	int spacesToFillBox;
+	
+	if(columns == 1){
+		
+		for(int i = 0; i < item_count; i++){
+			
+			printf("%c%s", pipe, items[i]);
+			
+			int spacesToFillBox = boxWidthWithoutBorders - strlen(items[i]);
+			str_mult(' ', spacesToFillBox);
+			
+			printf("%c\n", pipe);
+		}
+	}
+	
+	bottomOfBox(boxWidth);
+}
+
+
+
+
+
+
+
+#endif

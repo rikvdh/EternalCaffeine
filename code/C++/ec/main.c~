@@ -1,0 +1,290 @@
+//AUTHOR: Dakota Simonds
+//DATE: 10/10/2015
+//C99
+
+#define IM_ETERNAL 1
+
+//                   *
+//                *******
+//             *************
+//          *******************
+//       *************************
+//      _        _       _        _  
+//     ( )      ( )     ( )      ( ) 
+//    --*--    --*--   --*--    --*--
+//      |        |       |        |  
+//      |        |       |        |  
+
+
+//standard libs
+#include "stdio.h"   //printf scanf puts putchar
+#include "stdlib.h"  //EXIT_SUCCESS NULL exit
+#include "time.h"    //time
+#include "string.h"  //strcmp
+
+//my libs
+//change this next line to LINUX or WINDOWS as desired. This is for text_interface.c
+#define LINUX
+#include "text_interface.c"     //abstracted chars, printToCenter, lineOf, display_in_box, hackysizeof
+//#include "time_manipulation.c"  //in_seconds     
+#include "halflife.c"           //half_life
+
+
+//various global constants
+const int INPUT_MAX = 32; //arbitrary. Seems like a generous amount.
+const double HALFLIFE_OF_CAFFEINE = 20520.0; //Every number involved in the halflife calculation NEEDS double.
+                                             //The calculations can potentially be off dealing with this scale
+
+void         display_heading(char *heading);
+double       input_double(void);
+char*        input_str(char inputVal[]);
+void         input_int(int *inputVal);
+double       update(void);
+unsigned int time_elapsed(unsigned int start);
+void         give_report(double caffeineAmount, double caffeineTotal);
+int          string_compare(char *compareBase, const char*compareAgainst);
+
+void usage(void)
+{
+	puts("INTERACTIVE COMMANDS:");
+	//tab, string and justify by 9, space, string, newline
+	printf("\t%-9s %s\n", "start", "Start a new recording of your caffeine levels");
+	printf("\t%-9s %s\n", "update", "Add more consumed caffeine");
+	printf("\t%-9s %s\n", "report", "Gives current caffeine in blood stream");
+	printf("\t%-9s %s\n", "wipe", "Start over");
+	printf("\t%-9s %s\n", "quit", "Exits the program");
+	printf("\t%-9s %s\n", "calc", "Do theoretical caffeine half-life calculation");
+}
+
+
+
+
+int main(int argc, char *argv[])
+{
+	unsigned int startTime;
+	short started_flag = 0;
+	
+	//This is the variable that holds the current amount of caffeine
+	//so basicly the whole program is centred around changing this
+	//variable. Change with caution!
+	double caffeineAmount = 0.0;
+	double caffeineTotal  = 0.0;
+	double addCaffeine    = 0.0;
+	
+	display_heading("Eternal Caffeine v0 <copyleft. 2015>\n");
+	
+	if(argc > 1){ //if any arguments are give at all
+		usage();
+		exit(EXIT_SUCCESS);
+	}
+	
+	puts("Enter help for usage.\n\n");
+	
+	
+	char command[INPUT_MAX];
+	
+	while(IM_ETERNAL){
+		printf("command");
+		input_str(command);
+		
+		if( string_compare(command, "help") ){
+			
+			usage();
+		
+		} else if ( string_compare(command, "start") || string_compare(command, "update") ){
+			
+			if(started_flag){
+				//do halflife before add new amount
+				caffeineAmount = half_life(caffeineAmount,
+				                           time_elapsed(startTime),
+				                           HALFLIFE_OF_CAFFEINE);
+			} else {
+				started_flag = 1;
+			}
+			
+			startTime      = time(NULL);
+			
+			//add new amount
+			addCaffeine    = update();
+			caffeineAmount = caffeineAmount + addCaffeine;
+			caffeineTotal  = caffeineTotal + addCaffeine;
+			
+			printf("Caffeine amount is now %.02lfmg\n", caffeineAmount);
+			
+		} else if( string_compare(command, "report") ){
+			
+			if(! started_flag ){
+				puts("You have not started yet. Enter the start command!!!");
+				continue;
+			}
+			
+			double amountRemaining = half_life(caffeineAmount,
+			                                   time_elapsed(startTime),
+			                                   HALFLIFE_OF_CAFFEINE);
+			
+			give_report(amountRemaining, caffeineTotal);
+		
+		} else if( string_compare(command, "quit") ){
+			
+			putchar('\n');
+			exit(EXIT_SUCCESS);
+		
+		} else if( string_compare(command, "calc") ){
+			
+			//note: make sure this can be done while a recording has started and it not interfere with it.
+			puts("Command not yet implemented");
+			
+		} else if( string_compare(command, "wipe") ){
+			
+			addCaffeine = caffeineAmount = caffeineTotal = 0.0;
+			started_flag = 0;
+			puts("All values have been reset.");
+			
+		} else {
+			
+			puts("Command unknown. Enter help for usage.");
+			continue;
+			
+		}
+		
+	}
+	
+	
+	
+	return EXIT_SUCCESS;
+}
+
+
+
+
+
+//displays the header. Could be used elsewhere but not much reason too
+void display_heading(char *heading)
+{
+	lineOf(longDash);
+	printToCenter(heading, strlen(heading));
+	lineOf(longDash);
+}
+
+//displays a small header that has a border only slightly than the text
+void display_small_heading(char *heading)
+{
+	size_t headSize = strlen(heading);
+	size_t borderSize = headSize + 4; //add 4 because I want a little extra on each side of the boarder.
+	
+	char *border = str_mult_factory(solidBlock, borderSize);
+	
+	printToCenter(border, borderSize);
+	putchar('\n');
+	printToCenter(heading, headSize);
+	putchar('\n');
+	printToCenter(border, borderSize);
+	putchar('\n');
+	
+	free(border);
+}
+
+//
+//input functions. self explanitory
+double input_double(void)
+{
+	putchar(doubledArrows);
+	double inputVal;
+	scanf("%lf", &inputVal);
+	
+	return inputVal;
+}
+
+char* input_str(char inputVal[])
+{
+	putchar(doubledArrows);
+	scanf("%32s", inputVal);
+	return inputVal;
+}
+
+
+void input_int(int *inputVal)
+{
+	putchar(doubledArrows);
+	scanf("%d", inputVal);
+}
+
+//gets new amount of caffeine from the user. Entry point for the menu system.
+double update(void) 
+{
+	//INIT xml table of drinks
+	FILE *DRINKS_TABLE_FILE             = fopen("./drinks.xml","r");
+	//struct xml_document *DRINKS_TABLE   = xml_open_document(DRINKS_TABLE_FILE);
+	
+	display_small_heading("DRINKS MENU");
+	
+	//int i = 0;
+	int selection;
+	
+	printf("drink");
+	input_int(&selection);
+	
+	double caffeine;
+	if(selection == 0){
+		
+		do{
+			printf("Enter amount of caffeine in milligrams\n");
+			printf("amount");
+			caffeine = input_double();
+		} while(caffeine <= 0.0);
+	}
+	
+	
+	//cleanup
+	
+	//xml_document_free(DRINKS_TABLE, 1);
+	fclose(DRINKS_TABLE_FILE);
+	
+	
+	return caffeine;
+}
+
+unsigned int time_elapsed(unsigned int start)
+{
+	return (time(NULL) - start);
+}
+
+//calculates the percentage of the numerator to the denominator. Seems to round up/ceil.
+int calc_percentage(double numerator, double denominator) 
+{
+	if(numerator <= 0.0 || denominator <= 0.0)
+		return 0;
+	
+	//cross multiply and divide
+	int percent = numerator * 100;
+	percent = percent / denominator;
+	percent = 100 - percent;
+	
+	return percent;
+}
+
+//gives a report
+void give_report(double caffeineAmount, double caffeineTotal)
+{
+	printf("Total caffeine consumed %.02lfmg\n", caffeineTotal);
+	
+	double decay = (caffeineTotal - caffeineAmount);
+	printf("Total amount decayed %.02lfmg ", decay);
+	
+	int percent = calc_percentage(caffeineAmount, caffeineTotal);
+	printf("(%d%%)\n", percent);
+	
+	printf("Current amount of caffeine in your body %.02lfmg\n", caffeineAmount);
+}
+
+//returns true or false. Much cleaner than the stock strcmp() function.
+int string_compare(char *compareBase, const char *compareAgainst)
+{
+	const int MATCH = 0;
+	
+	if(strcmp(compareBase, compareAgainst) == MATCH)
+		return 1;
+	else
+		return 0;
+}
+

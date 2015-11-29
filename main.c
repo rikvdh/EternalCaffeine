@@ -40,7 +40,7 @@
 
 //my libs
 //#define WINDOWS //uncomment this line to look real perty in windows
-#include "text_interface.c"     //abstracted chars, printToCenter, lineOf, display_in_box
+#include "text_interface.c"     //abstracted chars, printToCenter, lineOf, inputs
 #include "halflife.c"           //half_life
 
 

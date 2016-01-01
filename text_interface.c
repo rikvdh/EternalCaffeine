@@ -1,7 +1,6 @@
 //AUTHOR: Dakota Simonds
 //DATE: Oct, 2015
 
-
 /***********************************************************************
 * This program is free software: you can redistribute it and/or modify
 *    it under the terms of the GNU General Public License as published by
@@ -15,15 +14,12 @@
 *
 *    You should have received a copy of the GNU General Public License
 ************************************************************************/
-
-
 #ifndef TEXT_INTERFACE
 #define TEXT_INTERFACE
 
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include "malloc.h"
 
 int CONSOLE_WIDTH = 79; //makes a bit of an assumption here but this is pretty standard
 
@@ -90,6 +86,11 @@ const char doubledArrows = '>';
 //
 //end abstracted chars
 
+#ifdef METRIC
+// 1 US fluid ounce in milliliters
+static const double ounceToMl = 29.5735296;
+#endif
+
 const char *drinks[] = {
 	"Pepsi",
 	"Dr. Peper",
@@ -104,7 +105,6 @@ const char *drinks[] = {
 };
 	
 size_t drinkCount = sizeof(drinks) / sizeof(drinks[0]);
-
 
 double caffeine_content(const int drink, const int ounces)
 {
@@ -126,11 +126,13 @@ double caffeine_content(const int drink, const int ounces)
 		 3.75,
 		 7.5
 	};
-	
+
+#ifdef METRIC
+	return caffeineContentPerOunce[drink] * ounces * ounceToMl;
+#else
 	return caffeineContentPerOunce[drink] * ounces;
+#endif
 }
-
-
 
 //
 //input functions. self explanitory
@@ -149,7 +151,6 @@ char* input_str(char inputVal[])
 	scanf("%32s", inputVal);
 	return inputVal;
 }
-
 
 void input_int(int *inputVal)
 {
@@ -218,13 +219,11 @@ void display_small_heading(char *heading)
 	free(border);
 }
 
-
 void display_menu(void)
 {
 	printf("Caffeine content in coffee can vary between roast, harvest, and company.\n\n");
 	for(int i = 0; i < drinkCount; ++i)
 		printf("%-3d %s\n", i, drinks[i]);
-	
 }
 
 //gets new amount of caffeine from the user. Entry point for the menu system.
@@ -247,7 +246,11 @@ double update(void)
 		input_int(&selection);
 		
 		int ounces;
+#ifdef METRIC
+		printf("milliliters");
+#else
 		printf("fluid ounces");
+#endif
 		input_int(&ounces);
 		
 		caffeine = caffeine_content(selection, ounces);

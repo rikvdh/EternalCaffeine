@@ -20,10 +20,10 @@
 #ifndef TEXT_INTERFACE
 #define TEXT_INTERFACE
 
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
-#include "malloc.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <malloc.h>
 
 int CONSOLE_WIDTH = 79; //makes a bit of an assumption here but this is pretty standard
 
@@ -90,47 +90,6 @@ const char doubledArrows = '>';
 //
 //end abstracted chars
 
-const char *drinks[] = {
-	"Pepsi",
-	"Dr. Peper",
-	"Coke",
-	"Moutian Dew",
-	"Red Bull",
-	"Monster",
-	"Drip Coffee",
-	"Starbucks Coffee",
-	"Green Tea",
-	"Black tea/Earl Grey"
-};
-	
-size_t drinkCount = sizeof(drinks) / sizeof(drinks[0]);
-
-
-double caffeine_content(const int drink, const int ounces)
-{
-	if(drink > drinkCount){
-		printf("Invalid selection!!");
-		return 0.0;
-	}
-	
-	//asymetric to drinks[]
-	static const double caffeineContentPerOunce[] = {
-		 3.166666667,
-		 3.416666667,
-		 2.833333333,
-		 4.5,
-		 9.456264775,
-		 10.0,
-		 11.875,
-		 22.5,
-		 3.75,
-		 7.5
-	};
-	
-	return caffeineContentPerOunce[drink] * ounces;
-}
-
-
 
 //
 //input functions. self explanitory
@@ -166,8 +125,9 @@ void str_mult(char stringToMult, int multBy) //string multiplication. mulitpilca
 
 //like str_mult but returns the string instead of printing it.
 char* str_mult_factory(char charToMult, size_t multBy) 
-{
-	char *multstring = malloc(multBy);
+{                                          //   *  *  *  *  *  *  *  *
+	char *multstring = malloc(multBy); // * REMEMBER TO FREE THIS *
+	                                   //   *  *  *  *  *  *  *  *
 	
 	for(int i = 0; i < multBy; i++)
 		multstring[i] = charToMult;
@@ -200,11 +160,11 @@ void display_heading(char *heading)
 	lineOf(longDash);
 }
 
-//displays a small header that has a border only slightly than the text
+//displays a small header that has a border only slightly bigger than the text
 void display_small_heading(char *heading)
 {
 	size_t headSize = strlen(heading);
-	size_t borderSize = headSize + 4; //add 4 because I want a little extra on each side of the boarder.
+	size_t borderSize = headSize + 4; //add 4 because I want a little extra on each side of the border.
 	
 	char *border = str_mult_factory(solidBlock, borderSize);
 	
@@ -219,29 +179,46 @@ void display_small_heading(char *heading)
 }
 
 
-void display_menu(void)
+void display_menu(struct drink drink_table[], const unsigned long DRINK_COUNT)
 {
 	printf("Caffeine content in coffee can vary between roast, harvest, and company.\n\n");
-	for(int i = 0; i < drinkCount; ++i)
-		printf("%-3d %s\n", i, drinks[i]);
+	for(int i = 0; i < DRINK_COUNT; ++i)
+		printf("%-3d %s\n", i, drink_table[i].drinkName);
 	
 }
 
 //gets new amount of caffeine from the user. Entry point for the menu system.
 //I initially intended something a bit more ambitious than an if/else chain
 //and plan on doing something fancier in the future.
-double update(void) 
+double update(struct drink drink_table[], const unsigned long DRINK_COUNT, bool drinks_disabled_flag) 
 {
 	int choice = 0;
-	printf("0  Manualy enter caffeine\n1  Choose from drinks\n");
-	input_int(&choice);
+	
+	enum{ MANUAL, MENU };
+	
+	if(!drinks_disabled_flag){
+		puts("0  Manualy enter caffeine");
+		puts("1  Choose from drinks");
+		input_int(&choice);
+	}
 	
 	double caffeine = 0.0;
 	
-	if(choice == 1){
+	
+	
+	if(choice == MANUAL){
+		
+		do{
+			printf("Enter amount of caffeine in milligrams\n");
+			printf("amount");
+			caffeine = input_double();
+		} while(caffeine <= 0.0);
+		
+	} else if (choice == MENU){
+		
 		display_small_heading("DRINKS MENU");
 		int selection;
-		display_menu();
+		display_menu(drink_table, DRINK_COUNT);
 		
 		printf("drink");
 		input_int(&selection);
@@ -250,13 +227,8 @@ double update(void)
 		printf("fluid ounces");
 		input_int(&ounces);
 		
-		caffeine = caffeine_content(selection, ounces);
-	} else {
-		do{
-			printf("Enter amount of caffeine in milligrams\n");
-			printf("amount");
-			caffeine = input_double();
-		} while(caffeine <= 0.0);
+		caffeine = caffeine_content(selection, ounces, drink_table);
+		
 	}
 	
 	return caffeine;

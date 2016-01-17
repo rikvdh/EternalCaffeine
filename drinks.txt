@@ -1,0 +1,10 @@
+Pepsi=3.166666667
+Dr. Peper=3.416666667
+Coke=2.833333333
+Moutian Dew=4.5
+Red Bull=9.456264775
+Monster=10.0
+Drip Coffee=11.875
+Starbucks Coffee=22.5
+Green Tea=3.75
+Black tea/Earl Grey=7.5

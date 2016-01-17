@@ -1,6 +1,6 @@
 //Copyright 2016 Dakota Simonds
 //date: Jan 14, 2016
-//description: This library is used from the loading and parsing of drinks.txt
+//description: This library is used for the loading and parsing of drinks.txt
 /************************************************************************
 * This program is free software: you can redistribute it and/or modify
 *    it under the terms of the GNU General Public License as published by

@@ -35,7 +35,7 @@
 #include "math.h"
 
 
-double half_life(double matterial, unsigned int timeElapsed, double periodOfHalfLife) // timeElapsed and periodOfHalfLife must be in the same unit eg. seconds
+double half_life(double matterial, time_t timeElapsed, double periodOfHalfLife) // timeElapsed and periodOfHalfLife must be in the same unit eg. seconds
 {
 	if(timeElapsed <= 0.0 || matterial <= 0.0)
 		return matterial;

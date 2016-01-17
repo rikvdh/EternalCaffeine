@@ -1,4 +1,4 @@
-//Copyright 2015 Dakota Simonds
+//Copyright 2015-2016 Dakota Simonds
 /************************************************************************
 * This program is free software: you can redistribute it and/or modify
 *    it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 
 //AUTHOR: Dakota Simonds
-//DATE: 10/10/2015
+//DATE CREATED: 10/10/2015
 //C99 (I like for-loop initialization)
 
 #define IM_ETERNAL 1
@@ -33,27 +33,30 @@
 
 
 //standard libs
-#include "stdio.h"   //printf scanf puts putchar
-#include "stdlib.h"  //EXIT_SUCCESS NULL exit
-#include "time.h"    //time
-#include "string.h"  //strcmp
+#include <stdio.h>   //printf scanf puts putchar
+#include <stdlib.h>  //EXIT_SUCCESS NULL exit
+#include <time.h>    //time
+#include <string.h>  //strcmp
+#include <stdbool.h>
 
 //my libs
 //#define WINDOWS //uncomment this line to look real perty in windows
-#include "text_interface.c"     //abstracted chars, printToCenter, lineOf, inputs
+#include "drinks.c"
+#include "text_interface.c"     //abstracted chars, printToCenter, lineOf, display_in_box, hackysizeof    
 #include "halflife.c"           //half_life
 
 
 //various global constants
 const int INPUT_MAX = 32; //arbitrary. Seems like a generous amount.
+//Biological halflife of caffeine in seconds
 const double HALFLIFE_OF_CAFFEINE = 20520.0; //Every number involved in the halflife calculation NEEDS double.
                                              //The calculations can potentially be off dealing with this scale
+const char *DRINK_PATH = "./drinks.txt";
 
-void         display_heading(char *heading);
-double       update(void);
-unsigned int time_elapsed(unsigned int start);
-void         give_report(double caffeineAmount, double caffeineTotal);
-int          string_compare(char *compareBase, const char*compareAgainst);
+time_t  time_elapsed(time_t start);
+int     calc_percentage(double numerator, double denominator);
+void    give_report(double caffeineAmount, double caffeineTotal);
+int     string_compare(char *compareBase, const char*compareAgainst);
 
 void usage(void)
 {
@@ -72,17 +75,19 @@ void usage(void)
 
 int main(int argc, char *argv[])
 {
-	unsigned int startTime;
-	short started_flag = 0;
+	time_t startTime;
+	bool started_flag = false;
+	bool drinks_disabled_flag = false;
 	
 	//This is the variable that holds the current amount of caffeine
 	//so basicly the whole program is centred around changing this
 	//variable. Change with caution!
-	double caffeineAmount = 0.0;
-	double caffeineTotal  = 0.0;
-	double addCaffeine    = 0.0;
+	double caffeineAmount  = 0.0;
+	double caffeineTotal   = 0.0;
+	double addCaffeine     = 0.0;
+	double amountRemaining = 0.0;
 	
-	display_heading("Eternal Caffeine v0 <copyleft. 2015>\n");
+	display_heading("Eternal Caffeine v1 <copyleft. 2015-2016>\n");
 	
 	if(argc > 1){ //if any arguments are give at all
 		usage();
@@ -92,8 +97,25 @@ int main(int argc, char *argv[])
 	puts("Enter help for usage.\n\n");
 	
 	
-	char command[INPUT_MAX];
+	FILE *drinkfile = fopen(DRINK_PATH, "r");
+	const unsigned int DRINK_COUNT = count_lines(drinkfile); //we must count the number of entries so we know how much to allocate
+	struct drink drink_table[DRINK_COUNT];
 	
+	if(drinkfile == NULL){
+		puts("drinks.txt cannont be found! Exiting...");
+		exit(EXIT_FAILURE);
+	}
+	
+	if(DRINK_COUNT == 0){
+		puts("No drinks found! Disabling drinks feature...");
+		drinks_disabled_flag = true;
+	}else{
+		load_drinks(drinkfile, drink_table);
+	}
+	
+	fclose(drinkfile);
+	
+	char command[INPUT_MAX];
 	while(IM_ETERNAL){
 		printf("command");
 		input_str(command);
@@ -110,13 +132,13 @@ int main(int argc, char *argv[])
 				                           time_elapsed(startTime),
 				                           HALFLIFE_OF_CAFFEINE);
 			} else {
-				started_flag = 1;
+				started_flag = true;
 			}
 			
 			startTime      = time(NULL);
 			
 			//add new amount
-			addCaffeine    = update();
+			addCaffeine    = update(drink_table, DRINK_COUNT, drinks_disabled_flag);
 			caffeineAmount = caffeineAmount + addCaffeine;
 			caffeineTotal  = caffeineTotal + addCaffeine;
 			
@@ -129,9 +151,9 @@ int main(int argc, char *argv[])
 				continue;
 			}
 			
-			double amountRemaining = half_life(caffeineAmount,
-			                                   time_elapsed(startTime),
-			                                   HALFLIFE_OF_CAFFEINE);
+			amountRemaining = half_life(caffeineAmount,
+			                            time_elapsed(startTime),
+			                            HALFLIFE_OF_CAFFEINE);
 			
 			give_report(amountRemaining, caffeineTotal);
 		
@@ -148,7 +170,7 @@ int main(int argc, char *argv[])
 		} else if( string_compare(command, "wipe") ){
 			
 			addCaffeine = caffeineAmount = caffeineTotal = 0.0;
-			started_flag = 0;
+			started_flag = false;
 			puts("All values have been reset.");
 			
 		} else {
@@ -167,7 +189,7 @@ int main(int argc, char *argv[])
 
 
 
-unsigned int time_elapsed(unsigned int start)
+time_t time_elapsed(time_t start)
 {
 	return (time(NULL) - start);
 }

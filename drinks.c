@@ -49,20 +49,21 @@ unsigned int count_lines(FILE *fp)
 char* scalpel(char *string, size_t beginpos, size_t endpos) //the bounds are exclusive because we don't want to include the tokens
 {
     const int MAKE_EXCLUSIVE = 1;
+    const short SPACE_FOR_NULL = 1;
     if(beginpos > 0)
     	    beginpos = beginpos + MAKE_EXCLUSIVE;
     
-    size_t buffer = endpos - beginpos;         //  *  *  *  *  *  *  *  *
+    size_t buffer = endpos - beginpos + SPACE_FOR_NULL;                          //  *  *  *  *  *  *  *  *
     char *choiceCut = malloc(buffer);          //* REMEMBER TO FREE THIS! *
-                                               //  *  *  *  *  *  *  *  *
+                                                                 //  *  *  *  *  *  *  *  *
     //pour
     int i;
     size_t offset;
-    for(i = 0; i < buffer; i++){
+    for(i = 0; i < (buffer - SPACE_FOR_NULL); i++){
     	offset = i+beginpos;
         choiceCut[i] = string[offset];
     }
-    
+    choiceCut[buffer] = '\0';
     return choiceCut;
 }
 

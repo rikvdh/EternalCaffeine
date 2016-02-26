@@ -13,8 +13,6 @@ struct drink
 	double caffeinePerOZ;
 };
 
-
-
 double caffeine_content(const int drink, const int ounces, struct drink drink_table[]);
 unsigned int count_lines(FILE *fp);
 char* scalpel(char *string, size_t beginpos, size_t endpos);

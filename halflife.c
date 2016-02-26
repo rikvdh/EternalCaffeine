@@ -1,6 +1,6 @@
 //AUTHOR: Dakota Simonds
 //Date: Oct 24, 2015
-//Description: just one function for doing half-life calculations
+//Description: Just one function for doing half-life calculations.
 
 /*
 * This is free and unencumbered software released into the public domain.
@@ -44,4 +44,3 @@ double half_life(double matterial, time_t timeElapsed, double periodOfHalfLife) 
 	result = matterial / reduce;
 	return result;
 }
-

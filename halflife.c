@@ -29,11 +29,7 @@
 * For more information, please refer to <http://unlicense.org/>
 */
 
-#ifndef HALFLIFE
-#define HALFLIFE
-
-#include "math.h"
-
+#include "halflife.h"
 
 double half_life(double matterial, time_t timeElapsed, double periodOfHalfLife) // timeElapsed and periodOfHalfLife must be in the same unit eg. seconds
 {
@@ -49,4 +45,3 @@ double half_life(double matterial, time_t timeElapsed, double periodOfHalfLife) 
 	return result;
 }
 
-#endif

@@ -15,15 +15,7 @@
 *    You should have received a copy of the GNU General Public License
 *************************************************************************/
 
-#ifndef EC_DRINKS
-#define EC_DRINKS
-
-
-struct drink
-{
-	char *drinkName;
-	double caffeinePerOZ;
-};
+#include "drinks.h"
 
 
 double caffeine_content(const int drink, const int ounces, struct drink drink_table[])
@@ -38,10 +30,14 @@ unsigned int count_lines(FILE *fp)
 {
 	if(fp == NULL)
 		return 0;
+	
 	unsigned int count = 0;
-	while(!feof(fp))
-		if(fgetc(fp) == '\n')
+	while(!feof(fp)){
+		if(fgetc(fp) == '\n'){
 			count++;
+		}
+	}
+	
 	rewind(fp);
 	return count;
 }
@@ -53,24 +49,22 @@ char* scalpel(char *string, size_t beginpos, size_t endpos) //the bounds are exc
     if(beginpos > 0)
     	    beginpos = beginpos + MAKE_EXCLUSIVE;
     
-    size_t buffer = endpos - beginpos + SPACE_FOR_NULL;                          //  *  *  *  *  *  *  *  *
-    char *choiceCut = malloc(buffer);          //* REMEMBER TO FREE THIS! *
-                                                                 //  *  *  *  *  *  *  *  *
-    //pour
-    int i;
-    size_t offset;
-    for(i = 0; i < (buffer - SPACE_FOR_NULL); i++){
+    size_t buffer = (endpos - beginpos) + SPACE_FOR_NULL;          //  *  *  *  *  *  *  *  *
+    char *choiceCut = malloc(buffer);                              //* REMEMBER TO FREE THIS! *
+                                                                   //  *  *  *  *  *  *  *  *
+    size_t offset = 0;
+    for(int i = 0; i < (buffer - SPACE_FOR_NULL); i++){
     	offset = i+beginpos;
         choiceCut[i] = string[offset];
     }
-    choiceCut[buffer] = '\0';
+    choiceCut[buffer-1] = '\0'; // -1 becuase zero-indexed
     return choiceCut;
 }
 
 size_t lin_search(char *Obj, char findThis)
 {
 	size_t i = 0;
-	while(Obj[i] != '\0'){
+	while(Obj[i] != '\0' || Obj[i] != '\r' || Obj[i] != '\n'){
 		if(Obj[i] == findThis)
 			return i;
 		i++;
@@ -86,7 +80,7 @@ double caffeine_val(char *entry)
 	
 	char *choicecut = scalpel(entry, begin, end);
 	double caf = atof(choicecut);
-	//free(choicecut); //if we free this then weird things happen... idk
+	free(choicecut); //if we free this then weird things happen... idk. UPDATE: after smashing 2 invalid writes to memory i think this is fixed.
 	return caf;
 }
 
@@ -94,12 +88,16 @@ char* drink_name(char *entry)
 {
 	size_t begin = 0;
 	size_t end   = lin_search(entry, '=');
-	char *name   = scalpel(entry, begin, end); // We don't need to feer this here
+	char *name   = scalpel(entry, begin, end); // We don't need to free this here
 	return name;
 }
 
-void load_drinks(FILE *drinkfile, struct drink *drink_table)
+void load_drinks(FILE *drinkfile, struct drink *drink_table, bool drinks_disabled_flag)
 {
+	if(drinkfile == NULL){
+		return;
+	}
+	
 	const unsigned int LINE_MAX = 512;
 	char line[LINE_MAX];
 	
@@ -112,4 +110,4 @@ void load_drinks(FILE *drinkfile, struct drink *drink_table)
 	}
 }
 
-#endif
+

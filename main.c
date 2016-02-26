@@ -13,7 +13,6 @@
 *    You should have received a copy of the GNU General Public License
 *************************************************************************/
 
-
 //AUTHOR: Dakota Simonds
 //DATE CREATED: 10/10/2015
 //C99 (I like for-loop initialization)

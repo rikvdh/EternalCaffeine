@@ -109,5 +109,3 @@ void load_drinks(FILE *drinkfile, struct drink *drink_table, bool drinks_disable
 		i++;
 	}
 }
-
-

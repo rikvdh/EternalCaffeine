@@ -1,5 +1,6 @@
 # EternalCaffeine
-A simple program to keep track of the amount of caffeine in your system.
+A simple program to keep track of the amount of caffeine in your body based on biological half-life.
+
 # Commands
 	start     Start a new recording of your caffeine levels
 	update    Add more consumed caffeine

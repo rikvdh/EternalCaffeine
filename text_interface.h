@@ -9,7 +9,7 @@
 #include "drinks.h"
 
 
-//#define WINDOWS //uncomment this line to look real perty in windows
+//#define WINDOWS //uncomment this line to look real perty in windows.
 
 //default to chars that are supported by all major OS's unless WINDOWS is define'd
 #ifndef WINDOWS

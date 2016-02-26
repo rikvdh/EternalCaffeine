@@ -17,10 +17,10 @@
 ************************************************************************/
 
 
-
 #include "text_interface.h"
 
 int CONSOLE_WIDTH = 79; //makes a bit of an assumption here but this is pretty standard
+
 
 
 //abstracted characters

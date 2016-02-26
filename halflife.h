@@ -6,4 +6,5 @@
 
 double half_life(double matterial, time_t timeElapsed, double periodOfHalfLife);
 
+
 #endif

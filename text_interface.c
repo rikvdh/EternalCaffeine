@@ -14,21 +14,12 @@
 *
 *    You should have received a copy of the GNU General Public License
 ************************************************************************/
-#ifndef TEXT_INTERFACE
-#define TEXT_INTERFACE
 
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
+
+#include "text_interface.h"
 
 int CONSOLE_WIDTH = 79; //makes a bit of an assumption here but this is pretty standard
 
-//default to chars that are supported by all major OS's unless WINDOWS is define'd
-#ifndef WINDOWS
-#ifndef UNIVERSAL
-#define UNIVERSAL
-#endif
-#endif
 
 
 //abstracted characters
@@ -70,10 +61,10 @@ const char littleDownRightElbow = ' ';
 const char littleDownLeftElbow = ' ';
 const char verySoftCloud = '=';
 const char softCloud = '=';
-const char hardCloud = '=';
+const char hardCloud = '#';
 const char pipe = '|';
-const char solidBlock = '=';
-const char solidTallBlock = '=';
+const char solidBlock = '#';
+const char solidTallBlock = '#';
 const char threeBars = '=';
 const char longDash = '-';
 const char topLeftCorner = ' ';
@@ -86,56 +77,10 @@ const char doubledArrows = '>';
 //
 //end abstracted chars
 
-#ifdef METRIC
-// 1 US fluid ounce in milliliters
-static const double ounceToMl = 29.5735296;
-#endif
 
-const char *drinks[] = {
-	"Pepsi",
-	"Dr. Peper",
-	"Coke",
-	"Moutian Dew",
-	"Red Bull",
-	"Monster",
-	"Drip Coffee",
-	"Starbucks Coffee",
-	"Green Tea",
-	"Black tea/Earl Grey"
-};
-	
-size_t drinkCount = sizeof(drinks) / sizeof(drinks[0]);
 
-double caffeine_content(const int drink, const int ounces)
-{
-	if(drink > drinkCount){
-		printf("Invalid selection!!");
-		return 0.0;
-	}
-	
-	//asymetric to drinks[]
-	static const double caffeineContentPerOunce[] = {
-		 3.166666667,
-		 3.416666667,
-		 2.833333333,
-		 4.5,
-		 9.456264775,
-		 10.0,
-		 11.875,
-		 22.5,
-		 3.75,
-		 7.5
-	};
-
-#ifdef METRIC
-	return caffeineContentPerOunce[drink] * ounces * ounceToMl;
-#else
-	return caffeineContentPerOunce[drink] * ounces;
-#endif
-}
-
-//
 //input functions. self explanitory
+//
 double input_double(void)
 {
 	putchar(doubledArrows);
@@ -168,10 +113,15 @@ void str_mult(char stringToMult, int multBy) //string multiplication. mulitpilca
 //like str_mult but returns the string instead of printing it.
 char* str_mult_factory(char charToMult, size_t multBy) 
 {
-	char *multstring = malloc(multBy);
+	const short SIZE_OF_NULL = 1;                     //   *  *  *  *  *  *  *  *
+	char *multstring = malloc(multBy + SIZE_OF_NULL); // * REMEMBER TO FREE THIS *
+	                                                  //   *  *  *  *  *  *  *  *
 	
 	for(int i = 0; i < multBy; i++)
 		multstring[i] = charToMult;
+	
+	//ensure null-termination
+	multstring[multBy] = '\0'; //My first solution was to add SIZE_OF_NULL but that is not needed becuase of zero-indexing
 	
 	return multstring; //remember to free() this after use
 }
@@ -196,16 +146,27 @@ void printToCenter(const char *text, int lengthOfString)
 //displays the header. Could be used elsewhere but not much reason too
 void display_heading(char *heading)
 {
+	if(heading == NULL){
+		fprintf(stderr, "Invalid heading in function display_heading\n");
+		return;
+	}
+	
 	lineOf(longDash);
 	printToCenter(heading, strlen(heading));
 	lineOf(longDash);
 }
 
-//displays a small header that has a border only slightly than the text
+//displays a small header that has a border only slightly bigger than the text
 void display_small_heading(char *heading)
 {
 	size_t headSize = strlen(heading);
-	size_t borderSize = headSize + 4; //add 4 because I want a little extra on each side of the boarder.
+	
+	if(heading == NULL || headSize == 0){
+		fprintf(stderr, "Invalid heading in function display_small_heading\n");
+		return;
+	}
+	
+	size_t borderSize = headSize + 4; //add 4 because I want a little extra on each side of the border.
 	
 	char *border = str_mult_factory(solidBlock, borderSize);
 	
@@ -219,50 +180,97 @@ void display_small_heading(char *heading)
 	free(border);
 }
 
-void display_menu(void)
+
+void display_menu(struct drink drink_table[], const unsigned long DRINK_COUNT)
 {
 	printf("Caffeine content in coffee can vary between roast, harvest, and company.\n\n");
-	for(int i = 0; i < drinkCount; ++i)
-		printf("%-3d %s\n", i, drinks[i]);
+	
+	for(int i = 0; i < DRINK_COUNT; ++i)
+		printf("%-2d %s\n", i, drink_table[i].drinkName);	
 }
 
 //gets new amount of caffeine from the user. Entry point for the menu system.
 //I initially intended something a bit more ambitious than an if/else chain
 //and plan on doing something fancier in the future.
-double update(void) 
+double update(struct drink drink_table[], const unsigned long DRINK_COUNT, bool drinks_disabled_flag, bool metric_flag) 
 {
-	int choice = 0;
-	printf("0  Manualy enter caffeine\n1  Choose from drinks\n");
-	input_int(&choice);
+	enum{
+		MANUAL,
+		MENU
+	};
 	
+	int choice = MANUAL;
 	double caffeine = 0.0;
+	const float ML_IN_ONE_OUNCE = 29.5735;
 	
-	if(choice == 1){
-		display_small_heading("DRINKS MENU");
-		int selection;
-		display_menu();
+	
+	if(!drinks_disabled_flag){
+		puts("0  Manualy enter caffeine");
+		puts("1  Choose from drinks");
+		printf("menu");
+		input_int(&choice);
+	}
+	
+	if(choice == MANUAL){
 		
-		printf("drink");
-		input_int(&selection);
-		
-		int ounces;
-#ifdef METRIC
-		printf("milliliters");
-#else
-		printf("fluid ounces");
-#endif
-		input_int(&ounces);
-		
-		caffeine = caffeine_content(selection, ounces);
-	} else {
 		do{
 			printf("Enter amount of caffeine in milligrams\n");
 			printf("amount");
 			caffeine = input_double();
 		} while(caffeine <= 0.0);
+		
+	}else if (choice == MENU){
+		
+		display_small_heading("DRINKS MENU");
+		int selection;
+		display_menu(drink_table, DRINK_COUNT);
+		
+		printf("drink");
+		input_int(&selection);
+		
+		int fluidAmount;
+		if(metric_flag){
+			printf("milliliters");
+			input_int(&fluidAmount);
+			fluidAmount = fluidAmount / ML_IN_ONE_OUNCE;
+		}else{
+			printf("fluid ounces");
+			input_int(&fluidAmount);
+		}
+		
+		
+		caffeine = caffeine_content(selection, fluidAmount, drink_table);
+		
 	}
 	
 	return caffeine;
 }
 
-#endif
+//calculates the percentage of the numerator to the denominator. Seems to round up/ceil.
+int calc_percentage(double numerator, double denominator) 
+{
+	if(numerator <= 0.0 || denominator <= 0.0)
+		return 0;
+	
+	//cross multiply and divide
+	int percent = numerator * 100;
+	percent = percent / denominator;
+	percent = 100 - percent;
+	
+	return percent;
+}
+
+//gives a report
+void give_report(double caffeineAmount, double caffeineTotal)
+{
+	printf("Total consumed %.02lfmg\n", caffeineTotal);
+	
+	double decay = (caffeineTotal - caffeineAmount);
+	printf("Total decayed %.02lfmg ", decay);
+	
+	int percent = calc_percentage(caffeineAmount, caffeineTotal);
+	printf("(%d%%)\n", percent);
+	
+	printf("Current active caffeine %.02lfmg\n", caffeineAmount);
+}
+
